@@ -1,0 +1,26 @@
+[db]
+db-driver = postgresql
+db-conn-name = default
+
+[default]
+username = root
+password = zces@1234
+host = 192.168.0.121
+port = 3306
+database = b049_maintain
+charset = utf8mb4
+
+[postgresql]
+host = 127.0.0.1
+port = 5432
+username = postgres
+database = upgrader
+password = zces@1234
+ssl-mode = disable
+
+[mssql]
+username = sa
+password = JW087073yjz..
+host = "127.0.0.1"
+port = 1433
+database = Dwqcgl

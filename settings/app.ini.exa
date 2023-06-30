@@ -1,0 +1,21 @@
+[app]
+name = "DJ Let's GO!"
+logo =
+production = true
+timezone = Asia/Shanghai
+default-limit = 5000
+[web-service]
+addr = ":40000"
+[tcp-server-service]
+enable = false
+addr = "0.0.0.0:40001"
+[tcp-client-service]
+enable = false
+addr = "127.0.0.1:8080"
+[rabbit-mq-service]
+enable = true
+addr = "127.0.0.1:5672"
+username = "admin"
+password = "zces@1234"
+vhost = "rnv-harbor-default-vhost"
+queue-name = "rnv-default-queue"

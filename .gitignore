@@ -1,0 +1,14 @@
+.idea
+.vscode/
+.fleet/
+out/*
+static/
+fleet/
+app
+**/.DS_Store
+*/.DS_Store
+.DS_Store
+settings/app.ini
+settings/db.ini
+__debug_bin
+__debug_bin.exe
