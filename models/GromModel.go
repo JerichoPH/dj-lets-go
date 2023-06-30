@@ -18,9 +18,9 @@ import (
 // GormModel 基础模型
 type GormModel struct {
 	Id                       uint64         `gorm:"primaryKey" json:"id"`
-	CreatedAt                time.Time      `gorm:"<-:create;type:datetime;default:CURRENT_TIMESTAMP;comment:创建时间;" json:"created_at,omitempty"`
-	UpdatedAt                time.Time      `gorm:"type:datetime;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;comment:更新时间;" json:"updated_at,omitempty"`
-	DeletedAt                gorm.DeletedAt `gorm:"index;type:datetime" json:"deleted_at"`
+	CreatedAt                time.Time      `gorm:"<-:create;type:TIMESTAMP WITH TIME ZONE;comment:创建时间;" json:"created_at,omitempty"`
+	UpdatedAt                time.Time      `gorm:"type:TIMESTAMP WITH TIME ZONE;default:CURRENT_TIMESTAMP;comment:更新时间;" json:"updated_at,omitempty"`
+	DeletedAt                gorm.DeletedAt `gorm:"index;type:timestamp with time zone" json:"deleted_at"`
 	Uuid                     string         `gorm:"type:varchar(36);unique;comment:uuid;" json:"uuid"`
 	Sort                     int64          `gorm:"type:bigint;default:0;comment:排序;" json:"sort"`
 	ctx                      *gin.Context
@@ -85,12 +85,12 @@ func (receiver *GormModel) demoFind() {
 }
 
 // ScopeBeEnableTrue 启用（查询域）
-func (GormModel) ScopeBeEnableTrue(db *gorm.DB) *gorm.DB {
+func (*GormModel) ScopeBeEnableTrue(db *gorm.DB) *gorm.DB {
 	return db.Where("be_enable is true")
 }
 
 // ScopeBeEnableFalse 不启用（查询域）
-func (GormModel) ScopeBeEnableFalse(db *gorm.DB) *gorm.DB {
+func (*GormModel) ScopeBeEnableFalse(db *gorm.DB) *gorm.DB {
 	return db.Where("be_enable is false")
 }
 

@@ -137,28 +137,7 @@ func launchCommand(commandName string, commandParams, tmp types.ListString, daem
 
 		// 模型
 		bootAutoMigrate(
-			models.TimeConsumingTaskOrderModel{},                    // 耗时任务单
-			models.TimeConsumingTaskOrderLogModel{},                 // 耗时任务日志
-			models.CategoryModel{},                                  // 种类
-			models.EntireModelModel{},                               // 类型/型号
-			models.EntireInstanceModel{},                            // 器材
-			models.EntireInstanceLogModel{},                         // 器材日志
-			models.MaintainModel{},                                  // 车间/车站/道口/中心
-			models.IndoorInstallRoomModel{},                         // 室内上道位置-机房
-			models.IndoorInstallPlatoonModel{},                      // 室内上道位置-排
-			models.IndoorInstallShelfModel{},                        // 室内上道位置-机柜
-			models.IndoorInstallTierModel{},                         // 室内上道位置-层
-			models.IndoorInstallPositionModel{},                     // 室内上道位置-位
-			models.RepairBaseFixAllocationMessageModel{},            // 检修分配消息
-			models.RepairBaseNormalFixAllocationModel{},             // 检修分配任务
-			models.RepairBaseNormalFixCompleteEntireInstanceModel{}, // 检修分配完成器材
-			models.WarehouseReportModel{},                           // 出入所单
-			models.RepairBaseBreakdownOrderModel{},                  // 故障修单
-			models.RepairBaseBreakdownFixAllocationModel{},          // 故障修分配
-			models.WarehouseReportModel{},                           // 出入所单
-			models.FixWorkflowModel{},                               // 检修单
-			models.FixWorkflowProcessModel{},                        // 检修过程单
-			models.BreakdownLogModel{},                              // 故障日志
+			models.AccountModel{},
 		)
 
 		// 创建TCP服务端
@@ -204,18 +183,6 @@ func launchCommand(commandName string, commandParams, tmp types.ListString, daem
 		commandResults = commands.NewTestCommand().Do(commandParams)
 	case "upgrade":
 		commandResults = commands.NewUpgradeCommand().Do(commandParams)
-	case "indoor-install-position":
-		commandResults = commands.NewIndoorInstallPositionCommand().Do(commandParams)
-	case "entire-instance":
-		commandResults = commands.NewEntireInstanceCommand().Do(commandParams)
-	case "workshop":
-		commandResults = commands.NewWorkshopCommand().Do(commandParams)
-	case "line":
-		commandResults = commands.NewLineCommand().Do(commandParams)
-	case "maintain":
-		commandResults = commands.NewMaintainCommand().Do(commandParams)
-	case "mongo-test":
-		commandResults = commands.NewMongoTestCommand().Do(commandParams)
 	case "excel":
 		commandResults = commands.NewExcelCommand().Do(commandParams)
 	}

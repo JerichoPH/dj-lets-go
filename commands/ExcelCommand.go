@@ -49,7 +49,7 @@ func (receiver ExcelCommand) fromJson(args ...string) types.ListString {
 
 	if len(jsonData) > 0 {
 		// 制作表头
-		for key, _ := range jsonData[0] {
+		for key := range jsonData[0] {
 			excelTitle = append(excelTitle, tools.NewExcelCellAny(key))
 			title = append(title, key)
 		}
