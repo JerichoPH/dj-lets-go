@@ -137,7 +137,14 @@ func launchCommand(commandName string, commandParams, tmp types.ListString, daem
 
 		// 模型
 		bootAutoMigrate(
-			models.AccountModel{},
+			models.AuthorizationAccount{},    // 用户
+			models.AuthorizationRole{},       // 角色
+			models.AuthorizationPermission{}, // 权限
+			models.AuthorizationMenu{},       // 菜单
+
+			models.VideoFile{}, // 视频文件
+			// models.VideoAlbum{}, // 视频专辑
+			models.VideoTag{}, // 视频标签
 		)
 
 		// 创建TCP服务端

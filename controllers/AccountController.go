@@ -36,12 +36,12 @@ func (receiver accountStoreForm) ShouldBind(ctx *gin.Context) accountStoreForm {
 func (AccountController) Store(ctx *gin.Context) {
 	var (
 		ret *gorm.DB
-		// repeat models.AccountModel
+		// repeat models.AuthorizationAccount
 	)
 
 	// 新建
-	account := &models.AccountModel{}
-	if ret = models.NewGormModel().SetModel(models.AccountModel{}).
+	account := &models.AuthorizationAccount{}
+	if ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
 		DB("", nil).
 		Create(&account); ret.Error != nil {
 		wrongs.PanicForbidden(ret.Error.Error())
@@ -54,18 +54,18 @@ func (AccountController) Store(ctx *gin.Context) {
 func (AccountController) Delete(ctx *gin.Context) {
 	var (
 		ret     *gorm.DB
-		account models.AccountModel
+		account models.AuthorizationAccount
 	)
 
 	// 查询
-	ret = models.NewGormModel().SetModel(models.AccountModel{}).
+	ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
 		SetWheres(types.MapStringToAny{"uuid": ctx.Param("uuid")}).
 		DB("", nil).
 		First(&account)
 	wrongs.PanicWhenIsEmpty(ret, "用户")
 
 	// 删除
-	if ret := models.NewGormModel().SetModel(models.AccountModel{}).DB("", nil).Delete(&account); ret.Error != nil {
+	if ret := models.NewGormModel().SetModel(models.AuthorizationAccount{}).DB("", nil).Delete(&account); ret.Error != nil {
 		wrongs.PanicForbidden(ret.Error.Error())
 	}
 
@@ -76,22 +76,22 @@ func (AccountController) Delete(ctx *gin.Context) {
 func (AccountController) Update(ctx *gin.Context) {
 	var (
 		ret     *gorm.DB
-		account models.AccountModel
-		// repeat  models.AccountModel
+		account models.AuthorizationAccount
+		// repeat  models.AuthorizationAccount
 	)
 
 	// 表单
 	// form := new(accountStoreForm).ShouldBind(ctx)
 
 	// 查询
-	ret = models.NewGormModel().SetModel(models.AccountModel{}).
+	ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
 		SetWheres(types.MapStringToAny{"uuid": ctx.Param("uuid")}).
 		DB("", nil).
 		First(&account)
 	wrongs.PanicWhenIsEmpty(ret, "用户")
 
 	// 编辑
-	if ret = models.NewGormModel().SetModel(models.AccountModel{}).
+	if ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
 		DB("", nil).
 		Where("uuid = ?", ctx.Param("uuid")).
 		Save(&account); ret.Error != nil {
@@ -105,9 +105,9 @@ func (AccountController) Update(ctx *gin.Context) {
 func (AccountController) Detail(ctx *gin.Context) {
 	var (
 		ret     *gorm.DB
-		account models.AccountModel
+		account models.AuthorizationAccount
 	)
-	ret = models.NewGormModel().SetModel(models.AccountModel{}).
+	ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
 		SetWheres(types.MapStringToAny{"uuid": ctx.Param("uuid")}).
 		DB("", nil).
 		First(&account)
@@ -117,12 +117,12 @@ func (AccountController) Detail(ctx *gin.Context) {
 }
 
 func (AccountController) listByQuery(ctx *gin.Context) *gorm.DB {
-	return services.NewAccountService(services.BaseService{Model: models.NewGormModel().SetModel(models.AccountModel{}), Ctx: ctx}).GetListByQuery()
+	return services.NewAccountService(services.BaseService{Model: models.NewGormModel().SetModel(models.AuthorizationAccount{}), Ctx: ctx}).GetListByQuery()
 }
 
 // List 列表
 func (receiver AccountController) List(ctx *gin.Context) {
-	var accounts []models.AccountModel
+	var accounts []models.AuthorizationAccount
 
 	ctx.JSON(
 		tools.NewCorrectWithGinContext("", ctx).
@@ -138,7 +138,7 @@ func (receiver AccountController) List(ctx *gin.Context) {
 
 // ListJdt jquery-dataTable分页列表
 func (receiver AccountController) ListJdt(ctx *gin.Context) {
-	var accounts []models.AccountModel
+	var accounts []models.AuthorizationAccount
 
 	ctx.JSON(
 		tools.NewCorrectWithGinContext("", ctx).

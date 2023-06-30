@@ -125,7 +125,7 @@ func (receiver TestCommand) sToExcel(paragraphUniqueCode string) types.ListStrin
 
 	models.
 		NewGormModel().
-		SetModel(models.AccountModel{}).
+		SetModel(models.AuthorizationAccount{}).
 		DB(fmt.Sprintf("fix-%s-rnv", paragraphUniqueCode), nil).
 		Joins("join entire_models em on ei.entire_model_unique_code = em.unique_code").
 		Joins("join categories c on em.category_unique_code = c.unique_code").

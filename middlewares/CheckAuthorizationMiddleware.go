@@ -27,7 +27,7 @@ func CheckAuthorization() gin.HandlerFunc {
 		token := split[1]
 
 		var (
-			account models.AccountModel
+			account models.AuthorizationAccount
 			ret     *gorm.DB
 		)
 		if token == "" {
@@ -50,10 +50,10 @@ func CheckAuthorization() gin.HandlerFunc {
 				}
 
 				// 获取用户信息
-				ret = models.NewGormModel().SetModel(models.AccountModel{}).DB("", nil).Where("uuid", claims.Uuid).First(&account)
+				ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).DB("", nil).Where("uuid", claims.Uuid).First(&account)
 				wrongs.PanicWhenIsEmpty(ret, fmt.Sprintf("令牌指向用户(JWT) %s %v ", token, claims))
 			case "AU":
-				ret = models.NewGormModel().SetModel(models.AccountModel{}).SetWheres(types.MapStringToAny{"uuid": token}).DB("", nil).First(&account)
+				ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).SetWheres(types.MapStringToAny{"uuid": token}).DB("", nil).First(&account)
 				wrongs.PanicWhenIsEmpty(ret, fmt.Sprintf("令牌指向用户(AU) %s", token))
 			default:
 				wrongs.PanicForbidden("权鉴认证方式不支持")

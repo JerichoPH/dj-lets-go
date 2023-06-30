@@ -85,7 +85,7 @@ func (AuthorizationController) Register(ctx *gin.Context) {
 	form := (&authorizationRegisterForm{}).ShouldBind(ctx)
 
 	// 检查重复项（用户名）
-	var repeat models.AccountModel
+	var repeat models.AuthorizationAccount
 	var ret *gorm.DB
 	ret = (&models.GormModel{}).
 		SetWheres(types.MapStringToAny{"username": form.Account}).
@@ -102,13 +102,13 @@ func (AuthorizationController) Register(ctx *gin.Context) {
 	bytes, _ := bcrypt.GenerateFromPassword([]byte(form.Password), 14)
 
 	// 保存新用户
-	account := &models.AccountModel{
+	account := &models.AuthorizationAccount{
 		GormModel: models.GormModel{Uuid: uuid.NewV4().String()},
 		Username:  form.Account,
 		Password:  string(bytes),
 		Nickname:  form.Nickname,
 	}
-	if ret = models.NewGormModel().SetModel(models.AccountModel{}).
+	if ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
 		SetOmits(clause.Associations).
 		DB("", nil).
 		Create(&account); ret.Error != nil {
@@ -124,12 +124,12 @@ func (AuthorizationController) Login(ctx *gin.Context) {
 	form := (&AuthorizationLoginForm{}).ShouldBind(ctx)
 
 	var (
-		account models.AccountModel
+		account models.AuthorizationAccount
 		ret     *gorm.DB
 	)
 	// 获取用户
 	ret = models.NewGormModel().
-		SetModel(models.AccountModel{}).
+		SetModel(models.AuthorizationAccount{}).
 		SetPreloads("Workshop", "Station", "WorkAreaByUniqueCode").
 		SetWheres(types.MapStringToAny{"account": form.Username}).
 		DB("", nil).
@@ -166,8 +166,8 @@ func (AuthorizationController) Login(ctx *gin.Context) {
 //		wrongs.PanicUnLogin("用户未登录")
 //	} else {
 //		// 获取当前用户信息
-//		var account models.AccountModel
-//		ret = models.NewGormModel().SetModel(models.AccountModel{}).
+//		var account models.AuthorizationAccount
+//		ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
 //			SetWheres(types.MapStringToAny{"uuid": accountUuid}).
 //			SetPreloads("RbacRoles", "RbacRoles.Menus").
 //			DB("",nil).
