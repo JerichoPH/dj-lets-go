@@ -13,22 +13,22 @@ type (
 		UploaderUuid      string               `gorm:"type:varchar(36);index;not null;default:'';comment:所属上传人uuid;" json:"uploader_uuid"`
 		Uploader          AuthorizationAccount `gorm:"foreignKey:uploader_uuid;references:uuid;comment:所属上传人;" json:"uploader"`
 		AlbumUuid         string               `gorm:"type:varchar(36);index;not null;default:'';comment:所属专辑uuid;" json:"album_uuid"`
-		Album             *VideoAlbum          `gorm:"foreignKey:uuid;references:album_uuid;comment:所属专辑;" json:"album"`
-		Tags              []*VideoTag          `gorm:"many2many:video_pivot_post_and_tags;foreignKey:uuid;joinForeignKey:video_tag_uuid;references:uuid;joinReferences:video_file_uuid;" json:"tags"`
+		Album             *VideoAlbum          `gorm:"foreignKey:album_uuid;references:uuid;comment:所属专辑;" json:"album"`
+		Tags              []*VideoTag          `gorm:"many2many:video_pivot_post_and_tags;foreignKey:uuid;joinForeignKey:video_tag_uuid;references:uuid;joinReferences:video_file_uuid; comment:相关标签;" json:"tags"`
 	}
 
 	// VideoAlbum 视频专辑
 	VideoAlbum struct {
 		GormModel
 		Name  string       `gorm:"type:varchar(64);unique;not null;comment:视频专辑;" json:"name"`
-		Files []*VideoFile `gorm:"foreignKey:uuid;references:album_uuid;comment:相关视频;" json:"files"`
+		Files []*VideoFile `gorm:"foreignKey:album_uuid;references:uuid;comment:相关视频文件;" json:"files"`
 	}
 
 	// VideoTag 视频标签
 	VideoTag struct {
 		GormModel
 		Name  string       `gorm:"type:varchar(64);unique;not null;comment:视频标签;" json:"name"`
-		Files []*VideoFile `gorm:"many2many:video_pivot_post_and_tags;foreignKey:uuid;joinForeignKey:video_file_uuid;references:uuid;joinReferences:video_tag_uuid;" json:"files"`
+		Files []*VideoFile `gorm:"many2many:video_pivot_post_and_tags;foreignKey:uuid;joinForeignKey:video_file_uuid;references:uuid;joinReferences:video_tag_uuid; comment:相关视频文件;" json:"files"`
 	}
 )
 
