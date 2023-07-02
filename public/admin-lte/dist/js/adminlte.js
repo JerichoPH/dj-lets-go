@@ -515,7 +515,7 @@ throw new Error('AdminLTE requires jQuery')
 }(jQuery);
 
 
-/* Layout()
+/* layout()
  * ========
  * Implements AdminLTE layout.
  * Fixes the layout height in case min-height fails.
@@ -687,7 +687,7 @@ throw new Error('AdminLTE requires jQuery')
     return this;
   };
 
-  // Layout DATA-API
+  // layout DATA-API
   // ===============
   $(window).on('load', function () {
     Plugin.call($('body'));

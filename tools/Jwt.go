@@ -1,9 +1,10 @@
 package tools
 
 import (
-	"dj-lets-go/wrongs"
 	"time"
-
+	
+	"dj-lets-go/wrongs"
+	
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
@@ -20,14 +21,16 @@ type Claims struct {
 
 // GenerateJwt 生成Jwt
 func GenerateJwt(
+	uuid string,
 	username string,
 	nickname string,
 ) (string, error) {
 	// 设置token有效时间
 	nowTime := time.Now()
 	expireTime := nowTime.Add(168 * time.Hour)
-
+	
 	claims := Claims{
+		Uuid:     uuid,
 		Username: username,
 		Nickname: nickname,
 		StandardClaims: jwt.StandardClaims{
@@ -37,7 +40,7 @@ func GenerateJwt(
 			Issuer: "dj-lets-go",
 		},
 	}
-
+	
 	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// 该方法内部生成签名字符串，再用于获取完整、已签名的token
 	token, err := tokenClaims.SignedString(jwtSecret)
@@ -50,7 +53,7 @@ func ParseJwt(token string) (*Claims, error) {
 	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
 	})
-
+	
 	if tokenClaims != nil {
 		// 从tokenClaims中获取到Claims对象，并使用断言，将该对象转换为我们自己定义的Claims
 		// 要传入指针，项目中结构体都是用指针传递，节省空间。
@@ -64,7 +67,7 @@ func ParseJwt(token string) (*Claims, error) {
 // GetJwtFromHeader 从header中获取jwt
 func GetJwtFromHeader(ctx *gin.Context) string {
 	tokens := ctx.Request.Header["Authorization"]
-
+	
 	if len(tokens) == 0 {
 		wrongs.PanicUnAuth("令牌不存在")
 	}

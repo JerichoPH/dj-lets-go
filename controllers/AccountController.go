@@ -6,7 +6,10 @@ import (
 	"dj-lets-go/tools"
 	"dj-lets-go/types"
 	"dj-lets-go/wrongs"
-
+	uuid "github.com/satori/go.uuid"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm/clause"
+	
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -15,7 +18,12 @@ type (
 	// AccountController 用户控制器
 	AccountController struct{}
 	// accountStoreForm 用户表单
-	accountStoreForm struct{}
+	accountStoreForm struct {
+		Username             string `form:"username" json:"username" binding:"required"`
+		Password             string `form:"password" json:"password" binding:"required"`
+		PasswordConfirmation string `form:"password_confirmation" json:"password_confirmation" binding:"required"`
+		Nickname             string `form:"nickname" json:"nickname" binding:"required"`
+	}
 )
 
 // NewAccountController 构造函数
@@ -28,25 +36,49 @@ func (receiver accountStoreForm) ShouldBind(ctx *gin.Context) accountStoreForm {
 	if err := ctx.ShouldBind(&receiver); err != nil {
 		wrongs.PanicValidate(err.Error())
 	}
-
+	
 	return receiver
 }
 
 // Store 新建
 func (AccountController) Store(ctx *gin.Context) {
 	var (
-		ret *gorm.DB
-		// repeat models.AuthorizationAccount
+		ret    *gorm.DB
+		repeat models.AuthorizationAccount
 	)
-
-	// 新建
-	account := &models.AuthorizationAccount{}
+	
+	// 表单验证
+	form := (&accountStoreForm{}).ShouldBind(ctx)
+	
+	// 检查重复项（用户名）
+	ret = (&models.GormModel{}).
+		SetWheres(types.MapStringToAny{"username": form.Username}).
+		DB("", nil).
+		First(&repeat)
+	wrongs.PanicWhenIsRepeat(ret, "用户名")
+	ret = (&models.GormModel{}).
+		SetWheres(types.MapStringToAny{"nickname": form.Nickname}).
+		DB("", nil).
+		First(&repeat)
+	wrongs.PanicWhenIsRepeat(ret, "昵称")
+	
+	// 密码加密
+	bytes, _ := bcrypt.GenerateFromPassword([]byte(form.Password), 14)
+	
+	// 保存新用户
+	account := &models.AuthorizationAccount{
+		GormModel: models.GormModel{Uuid: uuid.NewV4().String()},
+		Username:  form.Username,
+		Password:  string(bytes),
+		Nickname:  form.Nickname,
+	}
 	if ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
+		SetOmits(clause.Associations).
 		DB("", nil).
 		Create(&account); ret.Error != nil {
-		wrongs.PanicForbidden(ret.Error.Error())
+		wrongs.PanicForbidden("创建失败：" + ret.Error.Error())
 	}
-
+	
 	ctx.JSON(tools.NewCorrectWithGinContext("", ctx).Created(types.MapStringToAny{"account": account}).ToGinResponse())
 }
 
@@ -56,19 +88,19 @@ func (AccountController) Delete(ctx *gin.Context) {
 		ret     *gorm.DB
 		account models.AuthorizationAccount
 	)
-
+	
 	// 查询
 	ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
 		SetWheres(types.MapStringToAny{"uuid": ctx.Param("uuid")}).
 		DB("", nil).
 		First(&account)
 	wrongs.PanicWhenIsEmpty(ret, "用户")
-
+	
 	// 删除
 	if ret := models.NewGormModel().SetModel(models.AuthorizationAccount{}).DB("", nil).Delete(&account); ret.Error != nil {
 		wrongs.PanicForbidden(ret.Error.Error())
 	}
-
+	
 	ctx.JSON(tools.NewCorrectWithGinContext("", ctx).Deleted().ToGinResponse())
 }
 
@@ -79,17 +111,17 @@ func (AccountController) Update(ctx *gin.Context) {
 		account models.AuthorizationAccount
 		// repeat  models.AuthorizationAccount
 	)
-
+	
 	// 表单
 	// form := new(accountStoreForm).ShouldBind(ctx)
-
+	
 	// 查询
 	ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
 		SetWheres(types.MapStringToAny{"uuid": ctx.Param("uuid")}).
 		DB("", nil).
 		First(&account)
 	wrongs.PanicWhenIsEmpty(ret, "用户")
-
+	
 	// 编辑
 	if ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
 		DB("", nil).
@@ -97,7 +129,7 @@ func (AccountController) Update(ctx *gin.Context) {
 		Save(&account); ret.Error != nil {
 		wrongs.PanicForbidden(ret.Error.Error())
 	}
-
+	
 	ctx.JSON(tools.NewCorrectWithGinContext("", ctx).Updated(types.MapStringToAny{"account": account}).ToGinResponse())
 }
 
@@ -112,7 +144,7 @@ func (AccountController) Detail(ctx *gin.Context) {
 		DB("", nil).
 		First(&account)
 	wrongs.PanicWhenIsEmpty(ret, "用户")
-
+	
 	ctx.JSON(tools.NewCorrectWithGinContext("", ctx).Datum(types.MapStringToAny{"account": account}).ToGinResponse())
 }
 
@@ -123,7 +155,7 @@ func (AccountController) listByQuery(ctx *gin.Context) *gorm.DB {
 // List 列表
 func (receiver AccountController) List(ctx *gin.Context) {
 	var accounts []models.AuthorizationAccount
-
+	
 	ctx.JSON(
 		tools.NewCorrectWithGinContext("", ctx).
 			DataForPager(
@@ -139,7 +171,7 @@ func (receiver AccountController) List(ctx *gin.Context) {
 // ListJdt jquery-dataTable分页列表
 func (receiver AccountController) ListJdt(ctx *gin.Context) {
 	var accounts []models.AuthorizationAccount
-
+	
 	ctx.JSON(
 		tools.NewCorrectWithGinContext("", ctx).
 			DataForJqueryDataTable(

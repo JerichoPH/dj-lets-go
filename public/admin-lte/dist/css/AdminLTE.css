@@ -6,7 +6,7 @@
  *           Please visit http://opensource.org/licenses/MIT for more information
  */
 /*
- * Core: General Layout Style
+ * Core: General layout Style
  * -------------------------
  */
 html,
@@ -23,7 +23,7 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
 }
-/* Layout */
+/* layout */
 .wrapper {
   height: 100%;
   position: relative;

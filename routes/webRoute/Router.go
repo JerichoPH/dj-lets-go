@@ -1,11 +1,18 @@
 package webRoute
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+	
+	"github.com/gin-gonic/gin"
+)
 
 type Router struct{}
 
 func (Router) Register(engine *gin.Engine) {
-	HomeRouter{}.Load(engine)           // 欢迎页
-	DetectorTabletRouter{}.Load(engine) // 检测台旁边的平板
-	WsTestRouter{}.Load(engine)         // web-socket-test
+	engine.StaticFS("/public", http.Dir("public"))
+	
+	HomeRouter{}.Load(engine)          // 欢迎页
+	AuthorizationRouter{}.Load(engine) // 权鉴
+	AccountRouter{}.Load(engine)       // 用户管理
+	WsTestRouter{}.Load(engine)        // web-socket-test
 }

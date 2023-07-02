@@ -1,0 +1,27 @@
+POST http://{{host-api}}/authorization/register
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "nickname": "管理员",
+  "password": "123123",
+  "password_confirmation": "123123"
+}
+
+### 注册
+POST http://{{host-api}}/authorization/checkIsLogin
+Content-Type: application/json
+Authorization: JWT {{jwt}}
+
+{}
+
+### 检查是否登录
+POST http://{{host-api}}/authorization/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "123123"
+}
+
+### 登录

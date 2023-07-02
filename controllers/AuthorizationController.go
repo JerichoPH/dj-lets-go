@@ -149,6 +149,7 @@ func (AuthorizationController) Login(ctx *gin.Context) {
 	
 	// 生成Jwt
 	if token, err := tools.GenerateJwt(
+		account.Uuid,
 		account.Username,
 		account.Nickname,
 	); err != nil {

@@ -3277,7 +3277,7 @@
 	 * aApplied array. Cell inserts in the grid will only occur where there isn't
 	 * already a cell in that position.
 	 *  @param {object} oSettings dataTables settings object
-	 *  @param array {objects} aoSource Layout array from _fnDetectHeader
+	 *  @param array {objects} aoSource layout array from _fnDetectHeader
 	 *  @param {boolean} [bIncludeHidden=false] If true then include the hidden columns in the calc,
 	 *  @memberof DataTable#oApi
 	 */

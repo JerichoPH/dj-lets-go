@@ -186,10 +186,10 @@ $(function () {
     // Create the menu
     var $demoSettings = $('<div />')
 
-    // Layout options
+    // layout options
     $demoSettings.append(
         '<h4 class="control-sidebar-heading">'
-        + 'Layout Options'
+        + 'layout Options'
         + '</h4>'
         // Fixed layout
         + '<div class="form-group">'
@@ -203,7 +203,7 @@ $(function () {
         + '<div class="form-group">'
         + '<label class="control-sidebar-subheading">'
         + '<input type="checkbox"data-layout="layout-boxed" class="pull-right"/> '
-        + 'Boxed Layout'
+        + 'Boxed layout'
         + '</label>'
         + '<p>Activate the boxed layout</p>'
         + '</div>'
