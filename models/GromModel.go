@@ -1,15 +1,17 @@
 package models
 
 import (
-	"dj-lets-go/database"
-	"dj-lets-go/types"
-	"dj-lets-go/wrongs"
 	"fmt"
 	"strings"
 	"time"
-
+	
+	"dj-lets-go/database"
+	"dj-lets-go/tools"
+	"dj-lets-go/types"
+	"dj-lets-go/wrongs"
+	
 	uuid "github.com/satori/go.uuid"
-
+	
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -18,8 +20,8 @@ import (
 // GormModel 基础模型
 type GormModel struct {
 	Id                       uint64         `gorm:"primaryKey" json:"id"`
-	CreatedAt                time.Time      `gorm:"<-:create;type:TIMESTAMP WITH TIME ZONE;comment:创建时间;" json:"created_at,omitempty"`
-	UpdatedAt                time.Time      `gorm:"type:TIMESTAMP WITH TIME ZONE;default:CURRENT_TIMESTAMP;comment:更新时间;" json:"updated_at,omitempty"`
+	CreatedAt                time.Time      `gorm:"<-:create;type:TIMESTAMP;comment:创建时间;" json:"created_at,omitempty"`
+	UpdatedAt                time.Time      `gorm:"type:TIMESTAMP;default:CURRENT_TIMESTAMP;comment:更新时间;" json:"updated_at,omitempty"`
 	DeletedAt                gorm.DeletedAt `gorm:"index;type:timestamp with time zone" json:"deleted_at"`
 	Uuid                     string         `gorm:"type:varchar(36);unique;comment:uuid;" json:"uuid"`
 	Sort                     int64          `gorm:"type:bigint;default:0;comment:排序;" json:"sort"`
@@ -109,7 +111,7 @@ func (receiver *GormModel) SetModel(model interface{}) *GormModel {
 // SetDistinct 设置不重复字段
 func (receiver *GormModel) SetDistinct(distinctFieldNames ...string) *GormModel {
 	receiver.distinctFieldNames = distinctFieldNames
-
+	
 	return receiver
 }
 
@@ -188,63 +190,63 @@ func (receiver *GormModel) SetScopes(scopes ...func(*gorm.DB) *gorm.DB) *GormMod
 // SetWheresExtra 设置额外搜索条件字段
 func (receiver *GormModel) SetWheresExtra(wheresExtra map[string]func(string, *gorm.DB) *gorm.DB) *GormModel {
 	receiver.wheresExtra = wheresExtra
-
+	
 	return receiver
 }
 
 // SetWheresExtraExist 当Query参数存在时设置额外搜索条件（单个条件）
 func (receiver *GormModel) SetWheresExtraExist(wheresExtraExist map[string]func(string, *gorm.DB) *gorm.DB) *GormModel {
 	receiver.wheresExtraExist = wheresExtraExist
-
+	
 	return receiver
 }
 
 // SetWheresExtraExists 当Query参数存在时设置额外搜索条件（多个条件）
 func (receiver *GormModel) SetWheresExtraExists(wheresExtraExists map[string]func(types.ListString, *gorm.DB) *gorm.DB) *GormModel {
 	receiver.wheresExtraExists = wheresExtraExists
-
+	
 	return receiver
 }
 
 // SetWheresDateBetween 设置需要检查的日期范围字段
 func (receiver *GormModel) SetWheresDateBetween(fieldNames ...string) *GormModel {
 	receiver.whereDateBetween = fieldNames
-
+	
 	return receiver
 }
 
 // SetWheresDatetimeBetween 设置需要检查的日期时间范围字段
 func (receiver *GormModel) SetWheresDatetimeBetween(fieldNames ...string) *GormModel {
 	receiver.whereDatetimeBetween = fieldNames
-
+	
 	return receiver
 }
 
 // SetWheresIn 设置自定义查询条件(in)
 func (receiver *GormModel) SetWheresIn(condition map[string]string) *GormModel {
 	receiver.whereIn = condition
-
+	
 	return receiver
 }
 
 // SetWheresFuzzy 设置模糊查询条件
 func (receiver *GormModel) SetWheresFuzzy(condition map[string]string) *GormModel {
 	receiver.whereFuzzyQueryCondition = condition
-
+	
 	return receiver
 }
 
 // BeforeCreate 插入数据前
-func (receiver *GormModel) BeforeCreate(db *gorm.DB) (err error) {
+func (receiver *GormModel) BeforeCreate(*gorm.DB) (err error) {
 	receiver.Uuid = uuid.NewV4().String()
-	receiver.CreatedAt = time.Now()
-	receiver.UpdatedAt = time.Now()
+	receiver.CreatedAt = tools.NewTime().SetTimeNow().GetTime()
+	receiver.UpdatedAt = tools.NewTime().SetTimeNow().GetTime()
 	return
 }
 
 // BeforeSave 修改数据前
-func (receiver *GormModel) BeforeSave(db *gorm.DB) (err error) {
-	receiver.UpdatedAt = time.Now()
+func (receiver *GormModel) BeforeSave(*gorm.DB) (err error) {
+	receiver.UpdatedAt = tools.NewTime().SetTimeNow().GetTime()
 	return
 }
 
@@ -255,53 +257,53 @@ func (receiver *GormModel) DB(dbConnName string, dbConn *gorm.DB) (query *gorm.D
 	} else {
 		query = database.NewGormLauncher().GetConn(dbConnName)
 	}
-
+	
 	query = query.Where(receiver.wheres).Not(receiver.notWheres)
-
+	
 	if receiver.model != nil {
 		query = query.Model(&receiver.model)
 	}
-
+	
 	// 设置scopes
 	if len(receiver.scopes) > 0 {
 		query = query.Scopes(receiver.scopes...)
 	}
-
+	
 	// 拼接preloads关系
 	if len(receiver.preloads) > 0 {
 		for _, v := range receiver.preloads {
 			query = query.Preload(v)
 		}
 	}
-
+	
 	// 拼接distinct
 	if len(receiver.distinctFieldNames) > 0 {
 		query = query.Distinct(receiver.distinctFieldNames)
 	}
-
+	
 	// 拼接selects字段
 	if len(receiver.selects) > 0 {
 		query = query.Select(receiver.selects)
 	}
-
+	
 	// 拼接omits字段
 	if len(receiver.omits) > 0 {
 		query = query.Omit(receiver.omits...)
 	}
-
+	
 	return query
 }
 
 // DbUseQuery 根据Query参数初始化
 func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 	dbSession := receiver.DB(dbConnName, nil)
-
+	
 	wheres := make(types.MapStringToAny)
 	notWheres := make(types.MapStringToAny)
 	orWheres := make(types.MapStringToAny)
-
+	
 	// 自动化处理⬇
-
+	
 	// 拼接需要跳过的字段
 	ignoreFields := make(map[string]int32)
 	if len(receiver.ignoreFields) > 0 {
@@ -309,7 +311,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			ignoreFields[v] = 1
 		}
 	}
-
+	
 	// 拼接Where条件
 	for _, whereField := range receiver.whereFields {
 		if _, ok := ignoreFields[whereField]; !ok {
@@ -318,7 +320,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接WhereMap条件
 	if m, exist := receiver.ctx.GetQueryMap("__wheres__"); exist {
 		for whereMapField, whereMapValue := range m {
@@ -329,7 +331,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接NotWhere条件
 	for _, notWhereField := range receiver.notWhereFields {
 		if _, ok := ignoreFields[notWhereField]; !ok {
@@ -338,7 +340,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接NotWhereMap条件
 	if m, exist := receiver.ctx.GetQueryMap("__not_wheres__"); exist {
 		for notWhereMapField, notWhereMapValue := range m {
@@ -349,7 +351,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接OrWhere条件
 	for _, orWhereField := range receiver.orWhereFields {
 		if _, ok := ignoreFields[orWhereField]; !ok {
@@ -358,7 +360,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接OrWhereMap条件
 	if m, exist := receiver.ctx.GetQueryMap("__or_wheres__"); exist {
 		for orWhereMapField, orWhereMapValue := range m {
@@ -370,7 +372,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 		}
 	}
 	dbSession = dbSession.Where(wheres).Not(notWheres).Or(orWheres)
-
+	
 	// 拼接自主条件（等于）
 	if m, exist := receiver.ctx.GetQueryMap("__eq__"); exist {
 		for field, value := range m {
@@ -381,7 +383,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接自主条件（小于）
 	if m, exist := receiver.ctx.GetQueryMap("__lt__"); exist {
 		for field, value := range m {
@@ -392,7 +394,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接自主条件（大于）
 	if m, exist := receiver.ctx.GetQueryMap("__gt__"); exist {
 		for field, value := range m {
@@ -403,7 +405,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接自主条件（不等于）
 	if m, exist := receiver.ctx.GetQueryMap("__neq__"); exist {
 		for field, value := range m {
@@ -414,7 +416,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接自主条件（小于等于）
 	if m, exist := receiver.ctx.GetQueryMap("__elt__"); exist {
 		for field, value := range m {
@@ -425,7 +427,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接自主条件（大于等于）
 	if m, exist := receiver.ctx.GetQueryMap("__egt__"); exist {
 		for field, value := range m {
@@ -436,7 +438,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接自主条件（大于等于）
 	if m, exist := receiver.ctx.GetQueryMap("__egt__"); exist {
 		for field, value := range m {
@@ -447,7 +449,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接自主条件（in）
 	if m, exist := receiver.ctx.GetQueryMap("__in__"); exist {
 		for field, values := range m {
@@ -458,7 +460,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接自主条件（between）
 	if m, exist := receiver.ctx.GetQueryMap("__between__"); exist {
 		for field, values := range m {
@@ -469,16 +471,16 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 自主拼接preload
 	if a, exist := receiver.ctx.GetQueryArray("__preloads__[]"); exist {
 		for _, d := range a {
 			dbSession = dbSession.Preload(d)
 		}
 	}
-
+	
 	// 手动处理⬇
-
+	
 	// 拼接额外搜索条件
 	for fieldName, v := range receiver.wheresExtra {
 		if _, ok := ignoreFields[fieldName]; !ok {
@@ -487,7 +489,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接额外搜索条件（判断值是否存在，单个条件）
 	for fieldName, v := range receiver.wheresExtraExist {
 		if _, ok := ignoreFields[fieldName]; !ok {
@@ -496,7 +498,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接额外搜索条件（判断值是否存在，多个条件）
 	for fieldName, v := range receiver.wheresExtraExists {
 		if _, ok := ignoreFields[fieldName]; !ok {
@@ -505,7 +507,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接日期范围查询
 	if len(receiver.whereDateBetween) > 0 {
 		for _, fieldName := range receiver.whereDateBetween {
@@ -516,7 +518,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接日期时间范围查询
 	if len(receiver.whereDateBetween) > 0 {
 		for _, fieldName := range receiver.whereDateBetween {
@@ -527,7 +529,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接in查询条件
 	if len(receiver.whereIn) > 0 {
 		for field, condition := range receiver.whereIn {
@@ -538,7 +540,7 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 拼接模糊查询条件
 	if len(receiver.whereFuzzyQueryCondition) > 0 {
 		for field, condition := range receiver.whereFuzzyQueryCondition {
@@ -549,12 +551,12 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			}
 		}
 	}
-
+	
 	// 排序
 	if order, ok := receiver.ctx.GetQuery("__order__"); ok {
 		dbSession.Order(order)
 	}
-
+	
 	// 指定排序
 	if orderField, ok := receiver.ctx.GetQueryArray("__order_field__"); ok {
 		if len(orderField) > 2 {
@@ -562,6 +564,6 @@ func (receiver *GormModel) DbUseQuery(dbConnName string) *gorm.DB {
 			dbSession.Order(fmt.Sprintf("field (%s,%s)", orderField[0], orderFieldV))
 		}
 	}
-
+	
 	return dbSession
 }

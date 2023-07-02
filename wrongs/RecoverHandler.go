@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"runtime/debug"
-
+	
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,14 +12,15 @@ func RecoverHandler(c *gin.Context) {
 	defer func() {
 		if reco := recover(); reco != nil {
 			// 打印错误堆栈信息
-			log.Printf("panic: %v\n", reco)
-
+			log.Printf("异常： %v", reco)
+			
 			// 判断错误类型
 			switch fmt.Sprintf("%T", reco) {
 			case "*validator.Validationerrors":
 				// 表单验证错误
 				c.JSON(NewInCorrect().Validate("", errorToString(reco)).ToGinResponse())
 			case "*wrongs.ValidateWrong":
+				// 表单验证错误
 				c.JSON(NewInCorrect().Validate(errorToString(reco), map[string]string{}).ToGinResponse())
 			case "*wrongs.ForbiddenWrong":
 				// 禁止操作
@@ -38,11 +39,11 @@ func RecoverHandler(c *gin.Context) {
 				c.JSON(NewInCorrect().Accident(errorToString(reco), reco).ToGinResponse())
 				debug.PrintStack() // 打印堆栈信息
 			}
-
+			
 			c.Abort()
 		}
 	}()
-
+	
 	c.Next()
 }
 
@@ -52,6 +53,7 @@ func errorToString(recover interface{}) string {
 	case error:
 		return errorType.Error()
 	default:
+		log.Printf("string")
 		return recover.(string)
 	}
 }

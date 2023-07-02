@@ -1,15 +1,16 @@
 package providers
 
 import (
-	"dj-lets-go/tools"
-	"dj-lets-go/types"
-	"dj-lets-go/wrongs"
 	"io"
 	"log"
 	"net"
 	"sync"
 	"time"
-
+	
+	"dj-lets-go/tools"
+	"dj-lets-go/types"
+	"dj-lets-go/wrongs"
+	
 	"github.com/goccy/go-json"
 	uuid "github.com/satori/go.uuid"
 )
@@ -30,13 +31,13 @@ func TcpAddClient(conn net.Conn) {
 func TcpRemoveClient(conn net.Conn) {
 	tcpClientMutex.Lock()
 	defer tcpClientMutex.Unlock()
-
+	
 	log.Printf("[tcp-server-debug] [关闭连接] %s %s\n", tcpAddrToUuidDict[conn.RemoteAddr().String()], conn.RemoteAddr().String())
-
+	
 	delete(tcpClients, conn)
 	delete(tcpUuidToAddrDict, tcpAddrToUuidDict[conn.RemoteAddr().String()])
 	delete(tcpAddrToUuidDict, conn.RemoteAddr().String())
-
+	
 	log.Printf("[tcp-server-debug] [剩余连接] %v\n", tcpClients)
 }
 
@@ -81,12 +82,12 @@ func handleConnection(conn net.Conn) {
 			log.Printf("[tcp-server-error] [关闭链接失败] %s\n", err.Error())
 		}
 	}()
-
+	
 	newUuid := uuid.NewV4().String()
 	_, err := io.WriteString(conn, tools.NewCorrectWithBusiness("链接成功", "connection-success", "").Datum(types.MapStringToAny{"uuid": newUuid}).ToJsonStr())
 	tcpUuidToAddrDict[newUuid] = conn.RemoteAddr().String()
 	tcpAddrToUuidDict[conn.RemoteAddr().String()] = newUuid
-
+	
 	if err != nil {
 		log.Printf("[tcp-server-error] [发送消息失败] %s %s\n", conn.RemoteAddr().String(), "链接成功")
 	}
@@ -97,28 +98,28 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 		message := string(buf[:n])
-
+		
 		business := &types.StdBusiness{}
 		err = json.Unmarshal(buf[:n], business)
 		if err != nil {
 			log.Printf("[tcp-server-error] [解析业务失败] %s\n", message)
-
-			TcpServerSendMessageByAddr(wrongs.NewInCorrectWithBusniess("error").Error("业务解析失败", types.MapStringToAny{"request_content": message}).ToJsonStr(), conn.RemoteAddr().String())
+			
+			TcpServerSendMessageByAddr(wrongs.NewInCorrectWithBusiness("error").Error("业务解析失败", types.MapStringToAny{"request_content": message}).ToJsonStr(), conn.RemoteAddr().String())
 		}
-
+		
 		log.Printf("[tcp-server-debug] [接收客户端消息] %s %v\n", conn.RemoteAddr().String(), business)
-
+		
 		switch business.BusinessType {
 		case "ping":
 			log.Printf("[tcp-server-debug] [%s] %s\n", business.BusinessType, message)
-
+			
 			TcpServerSendMessageByAddr(tools.NewCorrectWithBusiness("pong", "pong", "").Datum(types.MapStringToAny{"time": time.Now().Unix()}).ToJsonStr(), conn.RemoteAddr().String())
 		case "authorization/bindUserUuid":
 			log.Printf("[tcp-server-debug] [%s] 绑定用户uuid\n", business.BusinessType)
-
+			
 			tcpAddrToUuidDict[conn.RemoteAddr().String()] = business.Content["uuid"].(string)
 			tcpUuidToAddrDict[business.Content["uuid"].(string)] = conn.RemoteAddr().String()
-
+			
 			TcpServerSendMessageByAddr(tools.NewCorrectWithBusiness("绑定成功", business.BusinessType, "").Datum(types.MapStringToAny{}).ToJsonStr(), conn.RemoteAddr().String())
 		}
 	}

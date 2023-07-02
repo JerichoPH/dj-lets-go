@@ -1,15 +1,16 @@
 package providers
 
 import (
-	"dj-lets-go/tools"
-	"dj-lets-go/types"
-	"dj-lets-go/wrongs"
 	"encoding/json"
 	"log"
 	"net/http"
 	"sync"
 	"time"
-
+	
+	"dj-lets-go/tools"
+	"dj-lets-go/types"
+	"dj-lets-go/wrongs"
+	
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
@@ -25,13 +26,13 @@ var (
 func WebsocketRemoveClient(conn *websocket.Conn) {
 	websocketClientMutex.Lock()
 	defer websocketClientMutex.Unlock()
-
+	
 	log.Printf("[websocket-debug] [关闭连接] %s %s\n", websocketAddrToUuidDict[conn.RemoteAddr().String()], conn.RemoteAddr().String())
-
+	
 	delete(websocketClients, conn)
 	delete(websocketUuidToAddrDict, websocketAddrToUuidDict[conn.RemoteAddr().String()])
 	delete(websocketAddrToUuidDict, conn.RemoteAddr().String())
-
+	
 	log.Printf("[websocket-debug] [剩余连接] %v\n", websocketClients)
 }
 
@@ -75,14 +76,14 @@ func WebsocketHandler(ctx *gin.Context) {
 		log.Printf("[websocket-error] %v\n", err)
 		return
 	}
-
+	
 	defer func() {
 		WebsocketRemoveClient(ws)
 		if err = ws.Close(); err != nil {
 			log.Printf("[websocket-error] [关闭链接失败] %s\n", err.Error())
 		}
 	}()
-
+	
 	newUuid := uuid.NewV4().String()
 	if err = ws.WriteMessage(1, []byte(tools.NewCorrectWithBusiness("连接成功", "connection-success", "").Datum(types.MapStringToAny{"uuid": newUuid}).ToJsonStr())); err != nil {
 		log.Printf("[websocket-error] [发送消息失败] %v\n", err)
@@ -90,34 +91,34 @@ func WebsocketHandler(ctx *gin.Context) {
 	websocketUuidToAddrDict[newUuid] = ws.RemoteAddr().String()
 	websocketAddrToUuidDict[ws.RemoteAddr().String()] = newUuid
 	WebsocketAddClient(ws)
-
+	
 	for {
 		_, message, err := ws.ReadMessage()
 		if err != nil {
 			log.Printf("[websocket-error] [读取消息失败] %s\n", ws.RemoteAddr().String())
 			break
 		}
-
+		
 		log.Printf("websocket-debug] [读取消息] %s\n", message)
-
+		
 		business := &types.StdBusiness{}
 		err = json.Unmarshal(message, business)
 		if err != nil {
 			log.Printf("[websocket-error] [解析业务失败] %s\n", message)
-
-			WebsocketSendMessageByAddr(wrongs.NewInCorrectWithBusniess("error").Error("业务解析失败", types.MapStringToAny{"request_content": message}).ToJsonStr(), ws.RemoteAddr().String())
+			
+			WebsocketSendMessageByAddr(wrongs.NewInCorrectWithBusiness("error").Error("业务解析失败", types.MapStringToAny{"request_content": message}).ToJsonStr(), ws.RemoteAddr().String())
 		}
-
+		
 		switch business.BusinessType {
 		case "ping":
 			log.Printf("[websocket-debug] [%s] %s\n", business.BusinessType, message)
 			WebsocketSendMessageByAddr(tools.NewCorrectWithBusiness("pong", "pong", "").Datum(types.MapStringToAny{"time": time.Now().Unix()}).ToJsonStr(), ws.RemoteAddr().String())
 		case "authorization/bindUserUuid":
 			log.Printf("[websocket-debug] [%s] 绑定用户uuid\n", business.BusinessType)
-
+			
 			websocketAddrToUuidDict[ws.RemoteAddr().String()] = business.Content["uuid"].(string)
 			websocketUuidToAddrDict[business.Content["uuid"].(string)] = ws.RemoteAddr().String()
-
+			
 			WebsocketSendMessageByAddr(tools.NewCorrectWithBusiness("绑定成功", business.BusinessType, "").Datum(types.MapStringToAny{}).ToJsonStr(), ws.RemoteAddr().String())
 		}
 	}

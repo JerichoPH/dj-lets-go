@@ -2,8 +2,6 @@ package tools
 
 import (
 	"bytes"
-	"dj-lets-go/constants"
-	"dj-lets-go/wrongs"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -13,7 +11,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-
+	
+	"dj-lets-go/constants"
+	"dj-lets-go/wrongs"
+	
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,9 +22,9 @@ import (
 func GetAuthorization(ctx *gin.Context) any {
 	authorization, exist := ctx.Get(constants.AccountAuthorizationFieldName)
 	if !exist {
-		wrongs.PanicUnLogin("登陆失效")
+		wrongs.PanicUnLogin("")
 	}
-
+	
 	return authorization
 }
 
@@ -93,20 +94,20 @@ func DeepCopyByGob(dst, src interface{}) error {
 	if err := gob.NewEncoder(&buffer).Encode(src); err != nil {
 		return err
 	}
-
+	
 	return gob.NewDecoder(&buffer).Decode(dst)
 }
 
 // JoinWithoutEmpty 去掉空值然后合并
 func JoinWithoutEmpty(values []string, sep string) string {
 	newValues := make([]string, 0)
-
+	
 	for _, value := range values {
 		if value != "" {
 			newValues = append(newValues, value)
 		}
 	}
-
+	
 	return strings.Join(newValues, sep)
 }
 

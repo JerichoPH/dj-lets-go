@@ -1,8 +1,9 @@
 package wrongs
 
 import (
-	"dj-lets-go/types"
 	"sync"
+	
+	"dj-lets-go/types"
 )
 
 type inCorrect struct {
@@ -18,17 +19,17 @@ func NewInCorrect() *inCorrect {
 	return ins
 }
 
-func NewInCorrectWithBusniess(businessType string) *inCorrect {
+func NewInCorrectWithBusiness(businessType string) *inCorrect {
 	once.Do(func() { ins = &inCorrect{} })
 	ins.businessType = businessType
 	return ins
 }
 
-func (receiver *inCorrect) UnAuthorization(msg string) types.StdResponse {
+func (receiver inCorrect) UnAuthorization(msg string) types.StdResponse {
 	if msg == "" {
 		msg = "未授权"
 	}
-
+	
 	return types.StdResponse{
 		Msg:          msg,
 		Content:      nil,
@@ -38,7 +39,7 @@ func (receiver *inCorrect) UnAuthorization(msg string) types.StdResponse {
 	}
 }
 
-func (receiver *inCorrect) ErrUnLogin() types.StdResponse {
+func (receiver inCorrect) ErrUnLogin() types.StdResponse {
 	return types.StdResponse{
 		Msg:          "未登录",
 		Content:      nil,
@@ -48,13 +49,13 @@ func (receiver *inCorrect) ErrUnLogin() types.StdResponse {
 	}
 }
 
-func (receiver *inCorrect) Forbidden(msg string) types.StdResponse {
+func (receiver inCorrect) Forbidden(msg string) types.StdResponse {
 	if msg == "" {
 		msg = "禁止操作"
 	}
-
+	
 	return types.StdResponse{
-		Msg:          "禁止操作",
+		Msg:          msg,
 		Content:      nil,
 		Status:       403,
 		ErrorCode:    3,
@@ -62,11 +63,11 @@ func (receiver *inCorrect) Forbidden(msg string) types.StdResponse {
 	}
 }
 
-func (receiver *inCorrect) Empty(msg string) types.StdResponse {
+func (receiver inCorrect) Empty(msg string) types.StdResponse {
 	if msg == "" {
 		msg = "数不存在"
 	}
-
+	
 	return types.StdResponse{
 		Msg:          msg,
 		Content:      nil,
@@ -76,11 +77,11 @@ func (receiver *inCorrect) Empty(msg string) types.StdResponse {
 	}
 }
 
-func (receiver *inCorrect) Validate(msg string, content any) types.StdResponse {
+func (receiver inCorrect) Validate(msg string, content any) types.StdResponse {
 	if msg == "" {
 		msg = "表单验证错误"
 	}
-
+	
 	return types.StdResponse{
 		Msg:          msg,
 		Content:      content,
@@ -94,7 +95,7 @@ func (receiver inCorrect) Error(msg string, content types.MapStringToAny) types.
 	if msg == "" {
 		msg = "错误"
 	}
-
+	
 	return types.StdResponse{
 		Msg:          msg,
 		Content:      content,
@@ -104,11 +105,11 @@ func (receiver inCorrect) Error(msg string, content types.MapStringToAny) types.
 	}
 }
 
-func (receiver *inCorrect) Accident(msg string, err any) types.StdResponse {
+func (receiver inCorrect) Accident(msg string, err any) types.StdResponse {
 	if msg == "" {
 		msg = "意外错误"
 	}
-
+	
 	return types.StdResponse{
 		Msg:          msg,
 		Content:      nil,

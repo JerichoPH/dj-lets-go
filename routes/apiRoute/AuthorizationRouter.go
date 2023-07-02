@@ -2,7 +2,8 @@ package apiRoute
 
 import (
 	"dj-lets-go/controllers"
-
+	"dj-lets-go/middlewares"
+	
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,8 +25,13 @@ func (AuthorizationRouter) Load(engine *gin.Engine) {
 	{
 		// 登陆
 		r.POST("login", controllers.NewAuthorizationController().Login)
-
+		
 		// 注册
 		r.POST("register", controllers.NewAuthorizationController().Register)
+	}
+	
+	r2 := engine.Group("api/authorization", middlewares.CheckAuthorization())
+	{
+		r2.Any("checkIsLogin", controllers.NewAuthorizationController().AnyCheckIsLogin)
 	}
 }
