@@ -17,11 +17,7 @@ func NewAuthorizationRouter() AuthorizationRouter {
 
 // Load 加载路由
 func (AuthorizationRouter) Load(engine *gin.Engine) {
-	r := engine.Group(
-		"api/authorization",
-		// middlewares.CheckJwt(),
-		// middlewares.CheckPermission(),
-	)
+	r := engine.Group("api/authorization")
 	{
 		// 登陆
 		r.POST("login", controllers.NewAuthorizationController().Login)

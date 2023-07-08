@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"dj-lets-go/services"
 	"log"
 
 	"dj-lets-go/constants"
@@ -186,66 +187,61 @@ func (receiver AuthorizationController) AnyCheckIsLogin(ctx *gin.Context) {
 
 // GetRoles 获取当前用户角色
 func (AuthorizationController) GetRoles(ctx *gin.Context) {
-	var (
-		account models.AuthorizationAccount
-		roles   = make([]*models.AuthorizationRole, 0)
+	ctx.JSON(
+		tools.NewCorrectWithGinContext("", ctx).
+			Datum(
+				types.MapStringToAny{
+					"roles": services.NewAuthorizationService(
+						services.BaseService{
+							Ctx: ctx,
+							Model: models.
+								NewGormModel().
+								SetModel(models.AuthorizationRole{}),
+						},
+					).
+						GetRoles(types.ListString{})}).
+			ToGinResponse(),
 	)
-
-	account = tools.GetAuthorization(ctx).(models.AuthorizationAccount)
-
-	models.
-		NewGormModel().
-		SetModel(models.AuthorizationRole{}).
-		DB("", nil).
-		Table("authorization_roles as r").
-		Joins("join authorization_pivot_role_and_accounts raa on raa.role_uuid = r.uuid").
-		Where("raa.account_uuid = ?", account.Uuid).
-		Find(&roles)
-
-	ctx.JSON(tools.NewCorrectWithGinContext("", ctx).Datum(types.MapStringToAny{"roles": roles}).ToGinResponse())
 }
 
 // GetPermissions 获取当前用户权限
 func (AuthorizationController) GetPermissions(ctx *gin.Context) {
-	var (
-		account     models.AuthorizationAccount
-		permissions = make([]*models.AuthorizationPermission, 0)
+	ctx.JSON(
+		tools.NewCorrectWithGinContext("", ctx).
+			Datum(
+				types.MapStringToAny{
+					"permissions": services.NewAuthorizationService(
+						services.BaseService{
+							Ctx: ctx,
+							Model: models.
+								NewGormModel().
+								SetModel(models.AuthorizationPermission{}),
+						},
+					).
+						GetPermissions(types.ListString{}),
+				},
+			).
+			ToGinResponse(),
 	)
-
-	account = tools.GetAuthorization(ctx).(models.AuthorizationAccount)
-
-	models.
-		NewGormModel().
-		SetModel(models.AuthorizationPermission{}).
-		DB("", nil).
-		Table("authorization_permissions as p").
-		Joins("join authorization_pivot_role_and_permissions rap on rap.permission_uuid = p.uuid").
-		Joins("join authorization_roles r on r.uuid = rap.role_uuid").
-		Joins("join authorization_pivot_role_and_accounts raa on raa.role_uuid = rap.role_uuid").
-		Where("raa.account_uuid = ?", account.Uuid).
-		Find(&permissions)
-
-	ctx.JSON(tools.NewCorrectWithGinContext("", ctx).Datum(types.MapStringToAny{"permissions": permissions}).ToGinResponse())
 }
 
 // GetMenus 获取当前用户菜单
 func (AuthorizationController) GetMenus(ctx *gin.Context) {
-	var (
-		account models.AuthorizationAccount
-		menus   = make([]*models.AuthorizationMenu, 0)
+	ctx.JSON(
+		tools.NewCorrectWithGinContext("", ctx).
+			Datum(
+				types.MapStringToAny{
+					"menus": services.NewAuthorizationService(
+						services.BaseService{
+							Ctx: ctx,
+							Model: models.
+								NewGormModel().
+								SetModel(models.AuthorizationMenu{}),
+						},
+					).
+						GetMenus(types.ListString{}),
+				},
+			).
+			ToGinResponse(),
 	)
-
-	account = tools.GetAuthorization(ctx).(models.AuthorizationAccount)
-
-	models.
-		NewGormModel().
-		SetModel(models.AuthorizationMenu{}).
-		DB("", nil).
-		Table("authorization_menus as m").
-		Joins("join authorization_pivot_role_and_menus ram on ram.menu_uuid = m.uuid").
-		Joins("join authorization_pivot_role_and_accounts raa on raa.role_uuid = ram.role_uuid").
-		Where("raa.account_uuid = ?", account.Uuid).
-		Find(&menus)
-
-	ctx.JSON(tools.NewCorrectWithGinContext("", ctx).Datum(types.MapStringToAny{"menus": menus}).ToGinResponse())
 }
