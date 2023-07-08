@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>DJ Let's GO | 登陆</title>
+    <title>DJ Let's GO | 注册账号</title>
     <!-- Tell the browser to be responsive to screen width -->
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
     <!-- Bootstrap 3.3.7 -->
@@ -27,56 +27,61 @@
     <!-- Google Font -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
 </head>
-<body class="hold-transition login-page">
-<div class="login-box">
-    <div class="login-logo">
+<body class="hold-transition register-page">
+<div class="register-box">
+    <div class="register-logo">
         <a href="/public/admin-lte/index2.html"><b>DJ</b>&nbsp;Let's GO</a>
     </div>
-    <!-- /.login-logo -->
-    <div class="login-box-body">
-        <p class="login-box-msg">登陆你的账号</p>
 
-        <form id="frmLogin">
+    <div class="register-box-body">
+        <p class="login-box-msg">注册账号</p>
+
+        <form id="frmRegister">
             <div class="form-group has-feedback">
-                <input type="text" name="username" id="txtUsername" class="form-control" placeholder="账号" autocomplete="off" autofocus  onkeydown="if(event.keyCode===13) txtPassword.focus()">
+                <input type="text" name="username" id="txtUsername" class="form-control" placeholder="账号" autocomplete="off" autofocus onkeydown="if(event.keyCode === 13) txtNickname.focus()">
+                <span class="fa fa-user form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="text" name="nickname" id="txtNickname" class="form-control" placeholder="昵称" autocomplete="off" onkeydown="if(event.keyCode===13) txtPassword.focus()">
                 <span class="fa fa-envelope form-control-feedback"></span>
             </div>
             <div class="form-group has-feedback">
-                <input type="password" name="password" id="txtPassword" class="form-control" placeholder="密码" autocomplete="off" onkeydown="if(event.keyCode===13) fnLogin()">
+                <input type="password" name="password" id="txtPassword" class="form-control" placeholder="密码" onkeydown="if(event.keyCode===13) txtPasswordConfirmation.focus()">
+                <span class="fa fa-lock form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="password" name="password_confirmation" id="txtPasswordConfirmation" class="form-control" placeholder="确认密码" onkeydown="if(event.keyCode === 13) fnRegister()">
                 <span class="fa fa-lock form-control-feedback"></span>
             </div>
             <div class="row">
                 <div class="col-xs-8">
                     <!--<div class="checkbox icheck">-->
                     <!--    <label>-->
-                    <!--        <input type="checkbox"> Remember Me-->
+                    <!--        <input type="checkbox"> I agree to the <a href="#">terms</a>-->
                     <!--    </label>-->
                     <!--</div>-->
                 </div>
                 <!-- /.col -->
                 <div class="col-xs-4">
-                    <button type="button" class="btn btn-primary btn-block btn-flat" onclick="fnLogin()">登&emsp;&emsp;陆</button>
+                    <button type="button" onclick="fnRegister()" class="btn btn-primary btn-block btn-flat">注&emsp;&emsp;册</button>
                 </div>
                 <!-- /.col -->
             </div>
         </form>
 
         <!--<div class="social-auth-links text-center">-->
-        <!--    <p>- OR -</p>-->
-        <!--    <a href="#" class="btn btn-block btn-social btn-facebook btn-flat"><i class="fa fa-facebook"></i> Sign in using-->
-        <!--        Facebook</a>-->
-        <!--    <a href="#" class="btn btn-block btn-social btn-google btn-flat"><i class="fa fa-google-plus"></i> Sign in using-->
-        <!--        Google+</a>-->
+        <!--  <p>- OR -</p>-->
+        <!--  <a href="#" class="btn btn-block btn-social btn-facebook btn-flat"><i class="fa fa-facebook"></i> Sign up using-->
+        <!--    Facebook</a>-->
+        <!--  <a href="#" class="btn btn-block btn-social btn-google btn-flat"><i class="fa fa-google-plus"></i> Sign up using-->
+        <!--    Google+</a>-->
         <!--</div>-->
-        <!-- /.social-auth-links -->
 
-        <a href="#">忘记密码</a><br>
-        <a href="/authorization/register" class="text-center">注&emsp;&emsp;册</a>
-
+        <a href="/authorization/login" class="text-center">返回登陆</a>
     </div>
-    <!-- /.login-box-body -->
+    <!-- /.form-box -->
 </div>
-<!-- /.login-box -->
+<!-- /.register-box -->
 
 <!-- jQuery 3 -->
 <script src="/public/admin-lte/bower_components/jquery/dist/jquery.min.js"></script>
@@ -87,7 +92,7 @@
 <script src="/public/js/layer/layer.js"></script>
 <script src="/public/js/tools-v20230502.js"></script>
 <script>
-    let $frmLogin = $('#frmLogin');
+    let $frmRegister = $('#frmRegister');
 
     $(() => {
         $('input').iCheck({
@@ -98,32 +103,36 @@
     });
 
     /**
-     * 登录
-     * @returns {*}
+     * 注册
      */
-    let fnLogin = () => {
-        let data = $frmLogin.serializeArray().pluck('value', 'name');
+    let fnRegister = () => {
+        let data = $frmRegister.serializeArray().pluck('value', 'name');
+        let loading = null;
 
         return $.ajax({
-            url: '/api/authorization/login',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            data: JSON.stringify(data),
+            url: '/api/authorization/register',
             type: 'post',
+            headers: {'Content-Type': 'application/json',},
+            data: JSON.stringify(data),
+            beforeSend: () => {
+                loading = layer.msg('处理中……', {time: 0,});
+            },
             success: res => {
-                let {account, token} = res.content;
+                console.log(res);
                 layer.msg(res.msg, {time: 1000,}, () => {
-                    localStorage.setItem('authorization.account', JSON.stringify(account));
-                    localStorage.setItem('authorization.token', token);
-                    location.href = '/';
+                    location.href = '/authorization/login';
                 });
             },
             error: err => {
-                layer.alert(err.responseJSON.msg, {time: 1500,}, index => {
+                console.log(err);
+                layer.msg(err.responseJSON.msg, {icon: 2,}, index => {
                     layer.close(index);
+                    if (err.status === 401) location.href = '/authorization/login';
                 });
-            }
+            },
+            complete: () => {
+                layer.close(loading);
+            },
         });
     };
 </script>
