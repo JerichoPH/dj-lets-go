@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"log"
-	
+
 	"dj-lets-go/constants"
 	"dj-lets-go/models"
 	"dj-lets-go/tools"
 	"dj-lets-go/types"
 	"dj-lets-go/wrongs"
-	
+
 	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -57,7 +57,7 @@ func (receiver authorizationRegisterForm) ShouldBind(ctx *gin.Context) authoriza
 	if receiver.Password != receiver.PasswordConfirmation {
 		wrongs.PanicValidate("两次密码输入不一致")
 	}
-	
+
 	return receiver
 }
 
@@ -81,7 +81,7 @@ func (receiver AuthorizationLoginForm) ShouldBind(ctx *gin.Context) Authorizatio
 	if len(receiver.Password) < 6 || len(receiver.Password) > 18 {
 		wrongs.PanicValidate("密码不可小于6位或大于18位")
 	}
-	
+
 	return receiver
 }
 
@@ -89,7 +89,7 @@ func (receiver AuthorizationLoginForm) ShouldBind(ctx *gin.Context) Authorizatio
 func (AuthorizationController) Register(ctx *gin.Context) {
 	// 表单验证
 	form := (&authorizationRegisterForm{}).ShouldBind(ctx)
-	
+
 	// 检查重复项（用户名）
 	var repeat models.AuthorizationAccount
 	var ret *gorm.DB
@@ -103,10 +103,10 @@ func (AuthorizationController) Register(ctx *gin.Context) {
 		DB("", nil).
 		First(&repeat)
 	wrongs.PanicWhenIsRepeat(ret, "昵称")
-	
+
 	// 密码加密
 	bytes, _ := bcrypt.GenerateFromPassword([]byte(form.Password), 14)
-	
+
 	// 保存新用户
 	account := &models.AuthorizationAccount{
 		GormModel: models.GormModel{Uuid: uuid.NewV4().String()},
@@ -120,7 +120,7 @@ func (AuthorizationController) Register(ctx *gin.Context) {
 		Create(&account); ret.Error != nil {
 		wrongs.PanicForbidden("创建失败：" + ret.Error.Error())
 	}
-	
+
 	ctx.JSON(tools.NewCorrectWithGinContext("注册成功", ctx).Created(types.MapStringToAny{"account": account}).ToGinResponse())
 }
 
@@ -128,7 +128,7 @@ func (AuthorizationController) Register(ctx *gin.Context) {
 func (AuthorizationController) Login(ctx *gin.Context) {
 	// 表单验证
 	form := (&AuthorizationLoginForm{}).ShouldBind(ctx)
-	
+
 	var (
 		account models.AuthorizationAccount
 		ret     *gorm.DB
@@ -140,13 +140,13 @@ func (AuthorizationController) Login(ctx *gin.Context) {
 		DB("", nil).
 		First(&account)
 	wrongs.PanicWhenIsEmpty(ret, "用户")
-	
+
 	// 验证密码
 	log.Printf("%s,%s", account.Password, form.Password)
 	if err := bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(form.Password)); err != nil {
 		wrongs.PanicUnAuth("账号或密码错误")
 	}
-	
+
 	// 生成Jwt
 	if token, err := tools.GenerateJwt(
 		account.Uuid,
@@ -180,42 +180,72 @@ func (receiver AuthorizationController) AnyCheckIsLogin(ctx *gin.Context) {
 	if !exist {
 		wrongs.PanicUnLogin("")
 	}
-	
+
 	ctx.JSON(tools.NewCorrectWithGinContext("登录成功", ctx).Datum(types.MapStringToAny{}).ToGinResponse())
 }
 
+// GetRoles 获取当前用户角色
+func (AuthorizationController) GetRoles(ctx *gin.Context) {
+	var (
+		account models.AuthorizationAccount
+		roles   = make([]*models.AuthorizationRole, 0)
+	)
+
+	account = tools.GetAuthorization(ctx).(models.AuthorizationAccount)
+
+	models.
+		NewGormModel().
+		SetModel(models.AuthorizationRole{}).
+		DB("", nil).
+		Table("authorization_roles as r").
+		Joins("join authorization_pivot_role_and_accounts raa on raa.role_uuid = r.uuid").
+		Where("raa.account_uuid = ?", account.Uuid).
+		Find(&roles)
+
+	ctx.JSON(tools.NewCorrectWithGinContext("", ctx).Datum(types.MapStringToAny{"roles": roles}).ToGinResponse())
+}
+
+// GetPermissions 获取当前用户权限
+func (AuthorizationController) GetPermissions(ctx *gin.Context) {
+	var (
+		account     models.AuthorizationAccount
+		permissions = make([]*models.AuthorizationPermission, 0)
+	)
+
+	account = tools.GetAuthorization(ctx).(models.AuthorizationAccount)
+
+	models.
+		NewGormModel().
+		SetModel(models.AuthorizationPermission{}).
+		DB("", nil).
+		Table("authorization_permissions as p").
+		Joins("join authorization_pivot_role_and_permissions rap on rap.permission_uuid = p.uuid").
+		Joins("join authorization_roles r on r.uuid = rap.role_uuid").
+		Joins("join authorization_pivot_role_and_accounts raa on raa.role_uuid = rap.role_uuid").
+		Where("raa.account_uuid = ?", account.Uuid).
+		Find(&permissions)
+
+	ctx.JSON(tools.NewCorrectWithGinContext("", ctx).Datum(types.MapStringToAny{"permissions": permissions}).ToGinResponse())
+}
+
 // GetMenus 获取当前用户菜单
-// func (AuthorizationController) GetMenus(ctx *gin.Context) {
-//	var ret *gorm.DB
-//	if accountUuid, exists := ctx.Get(tools.AccountOpenIdFieldName); !exists {
-//		wrongs.PanicUnLogin("用户未登录")
-//	} else {
-//		// 获取当前用户信息
-//		var account models.AuthorizationAccount
-//		ret = models.NewGormModel().SetModel(models.AuthorizationAccount{}).
-//			SetWheres(types.MapStringToAny{"uuid": accountUuid}).
-//			SetPreloads("RbacRoles", "RbacRoles.Menus").
-//			DB("",nil).
-//			FindOneUseQuery(&account)
-//		if !wrongs.PanicWhenIsEmpty(ret, "") {
-//			wrongs.PanicUnLogin("当前令牌指向用户不存在")
-//		}
-//
-//		var menus []models.MenuModel
-//		models.NewGormModel().SetModel(models.MenuModel{}).
-//			DB("",nil).
-//			Joins("join pivot_rbac_role_and_menus prram on menus.uuid = prram.menu_uuid").
-//			Joins("join rbac_roles r on prram.rbac_role_uuid = r.uuid").
-//			Joins("join pivot_rbac_role_and_accounts prraa on r.uuid = prraa.rbac_role_uuid").
-//			Joins("join accounts a on prraa.account_uuid = a.uuid").
-//			Where("a.uuid = ?", account.GormModel.Uuid).
-//			Where("menus.deleted_at is null").
-//			Where("menus.parent_uuid = ''").
-//			Order("menus.sort asc").
-//			Order("menus.id asc").
-//			Preload("Subs").
-//			Find(&menus)
-//
-//		ctx.JSON(tools.CorrectInit("", ctx).Datum(types.MapStringToAny{"menus": menus}))
-//	}
-// }
+func (AuthorizationController) GetMenus(ctx *gin.Context) {
+	var (
+		account models.AuthorizationAccount
+		menus   = make([]*models.AuthorizationMenu, 0)
+	)
+
+	account = tools.GetAuthorization(ctx).(models.AuthorizationAccount)
+
+	models.
+		NewGormModel().
+		SetModel(models.AuthorizationMenu{}).
+		DB("", nil).
+		Table("authorization_menus as m").
+		Joins("join authorization_pivot_role_and_menus ram on ram.menu_uuid = m.uuid").
+		Joins("join authorization_pivot_role_and_accounts raa on raa.role_uuid = ram.role_uuid").
+		Where("raa.account_uuid = ?", account.Uuid).
+		Find(&menus)
+
+	ctx.JSON(tools.NewCorrectWithGinContext("", ctx).Datum(types.MapStringToAny{"menus": menus}).ToGinResponse())
+}
